@@ -7,7 +7,7 @@ import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 
 /**
- * Example of a simple Echo Client.
+ * Simple WS Client that echoes the original message with a timestamp.
  */
 public class WebSocketClientStarter
 {
