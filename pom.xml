@@ -4,7 +4,7 @@
         <modelVersion>4.0.0</modelVersion>
 
         <groupId>com.github.antennaesdk</groupId>
-        <artifactId>java-ws-client</artifactId>
+        <artifactId>mms-server-entity-jetty</artifactId>
         <version>0.0.1-SNAPSHOT</version>
 
 	<dependencies>

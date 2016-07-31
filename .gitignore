@@ -6,7 +6,6 @@ target
 *.iml
 *.ipr
 *.iws
-ebay.log
 MANIFEST.MF
 *.bash_profile
 *.DS_Store
