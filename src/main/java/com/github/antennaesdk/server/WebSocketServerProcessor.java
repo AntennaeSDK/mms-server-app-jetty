@@ -1,4 +1,19 @@
-package com.github.antennaesdk.ws;
+/*
+ * Copyright 2016 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.github.antennaesdk.server;
 
 import java.text.SimpleDateFormat;
 import java.util.concurrent.*;
@@ -8,7 +23,6 @@ import org.antennae.common.messages.ClientMessage;
 import org.antennae.common.messages.ClientMessageWrapper;
 import org.antennae.common.messages.ServerMessageWrapper;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.StatusCode;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
@@ -18,34 +32,30 @@ import org.eclipse.jetty.websocket.api.annotations.WebSocket;
  * Basic Echo Client Socket
  */
 @WebSocket(maxTextMessageSize = 64 * 1024)
-public class WebSocketServerProcessor
-{
+public class WebSocketServerProcessor {
+
     private final CountDownLatch closeLatch;
     @SuppressWarnings("unused")
     private Session session;
 
-    public WebSocketServerProcessor()
-    {
+    public WebSocketServerProcessor() {
         this.closeLatch = new CountDownLatch(1);
     }
 
-    public boolean awaitClose(int duration, TimeUnit unit) throws InterruptedException
-    {
-        return this.closeLatch.await(duration,unit);
+    public boolean awaitClose(int duration, TimeUnit unit) throws InterruptedException {
+        return this.closeLatch.await(duration, unit);
     }
 
     @OnWebSocketClose
-    public void onClose(int statusCode, String reason)
-    {
-        System.out.printf("Connection closed: %d - %s%n",statusCode,reason);
+    public void onClose(int statusCode, String reason) {
+        System.out.printf("Connection closed: %d - %s%n", statusCode, reason);
         this.session = null;
         this.closeLatch.countDown(); // trigger latch
     }
 
     @OnWebSocketConnect
-    public void onConnect(Session session)
-    {
-        System.out.printf("Got connect: %s%n",session);
+    public void onConnect(Session session) {
+        System.out.printf("Got connect: %s%n", session);
         System.out.printf("Local host:port: %s", session.getLocalAddress());
         this.session = session;
 //        try
@@ -66,37 +76,36 @@ public class WebSocketServerProcessor
     }
 
     @OnWebSocketMessage
-    public void onMessage(String msg)
-    {
-        System.out.printf("Got msg: %s%n",msg);
+    public void onMessage(String msg) {
+        System.out.printf("Got msg: %s%n", msg);
 
         processTextMessage(msg);
     }
 
-    public void processTextMessage( String m ){
+    public void processTextMessage(String m) {
 
-        if( m != null ){
+        if (m != null) {
 
             ServerMessageWrapper serverMessageWrapper = ServerMessageWrapper.fromJson(m);
 
             ClientMessageWrapper clientMessageWrapper = new ClientMessageWrapper();
             ClientMessage clientMessage = new ClientMessage();
-            clientMessage.setTo( serverMessageWrapper.getServerMessage().getFrom());
+            clientMessage.setTo(serverMessageWrapper.getServerMessage().getFrom());
 
             String payload = serverMessageWrapper.getServerMessage().getPayLoad();
 
-            clientMessage.setPayLoad( doBuzinezzLogic(payload) );
+            clientMessage.setPayLoad(doBuzinezzLogic(payload));
 
             clientMessageWrapper.setClientMessage(clientMessage);
-            clientMessageWrapper.setSessionId( serverMessageWrapper.getSessionId());
-            clientMessageWrapper.setNodeId( serverMessageWrapper.getNodeId() );
+            clientMessageWrapper.setSessionId(serverMessageWrapper.getSessionId());
+            clientMessageWrapper.setNodeId(serverMessageWrapper.getNodeId());
 
-            if( session != null && session.isOpen() ){
+            if (session != null && session.isOpen()) {
                 //session.getAsyncRemote().sendText( clientMessageWrapper.toJson() );
-                Future<Void> fut= session.getRemote().sendStringByFuture(clientMessageWrapper.toJson());
+                Future<Void> fut = session.getRemote().sendStringByFuture(clientMessageWrapper.toJson());
 
                 try {
-                    fut.get(2,TimeUnit.SECONDS); // wait for send to complete.
+                    fut.get(2, TimeUnit.SECONDS); // wait for send to complete.
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 } catch (ExecutionException e) {
@@ -108,7 +117,7 @@ public class WebSocketServerProcessor
         }
     }
 
-    public String doBuzinezzLogic( String payLoad ){
+    public String doBuzinezzLogic(String payLoad) {
         Message m = Message.fromJson(payLoad);
 
         m.body.text = "echo from: " + m.body.text + " : \n" + Timestamper.INSTANCE.getMillis();
@@ -129,7 +138,7 @@ public class WebSocketServerProcessor
    }
 }
  */
-    public static class Message{
+    public static class Message {
         String id;
         String type;
         String version;
@@ -137,30 +146,30 @@ public class WebSocketServerProcessor
         String username;
         Body body;
 
-        public static class Body{
+        public static class Body {
             String text;
         }
 
-        public String toJson(){
+        public String toJson() {
             Gson gson = new Gson();
             String result = gson.toJson(this);
             return result;
         }
-        public static Message fromJson( String json ){
+
+        public static Message fromJson(String json) {
             Gson gson = new Gson();
-            Message message = gson.fromJson( json, Message.class);
+            Message message = gson.fromJson(json, Message.class);
             return message;
         }
     }
 
-    public enum Timestamper
-    {   INSTANCE ;
+    public enum Timestamper {
+        INSTANCE;
 
-        private SimpleDateFormat dateFormat ;
+        private SimpleDateFormat dateFormat;
 
-        private Timestamper()
-        {
-            this.dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS") ;
+        private Timestamper() {
+            this.dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         }
 
         /*        public String get()
@@ -171,7 +180,7 @@ public class WebSocketServerProcessor
                     long date = this.startDate + (microSeconds/1000) ;
                     return this.dateFormat.format(date) + String.format("%03d", microSeconds % 1000) ;
                 }*/
-        public String getMillis(){
+        public String getMillis() {
             long milliSeconds = System.currentTimeMillis();
             return this.dateFormat.format(milliSeconds);
         }
